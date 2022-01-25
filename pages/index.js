@@ -1,36 +1,7 @@
 import { Box, Button, Text, TextField, Image } from "@skynexui/components";
 import appConfig from "../config.json";
-
-function GlobalStyle() {
-    return (
-        <style global jsx>{`
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                list-style: none;
-            }
-            body {
-                font-family: "Open Sans", sans-serif;
-            }
-            /* App fit Height */
-            html,
-            body,
-            #__next {
-                min-height: 100vh;
-                display: flex;
-                flex: 1;
-            }
-            #__next {
-                flex: 1;
-            }
-            #__next > * {
-                flex: 1;
-            }
-            /* ./App fit Height */
-        `}</style>
-    );
-} //estilo global aplica independente do nível
+import React, { useState } from "react"
+import { useRouter } from "next/router"
 
 function Titulo({ children, tag }) {
     const Tag = tag || 'h1';
@@ -59,26 +30,28 @@ function Titulo({ children, tag }) {
     )
   }
 
-  //o style do next só aplica os estilos para os elementos de primeiro nível
-  //se estiver em outro escopo, componente, ou elemento, ele não se aplica
-  //cria uma classe automaticamente para os elementos do estilo
+  o style do next só aplica os estilos para os elementos de primeiro nível
+  se estiver em outro escopo, componente, ou elemento, ele não se aplica
+  cria uma classe automaticamente para os elementos do estilo
   
   export default HomePage */
 
 export default function PaginaInicial() {
-    const username = "gabrielgui13";
+    //const username = "gabrielgui13";
+    const [username, setUsername] = useState("");
+
+    //window.location.href = '/chat' => recarrega, não é SPA
+    const roteamento = useRouter();
 
     return (
         <>
-            <GlobalStyle />
             <Box
                 styleSheet={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     backgroundColor: appConfig.theme.colors.primary[500],
-                    backgroundImage:
-                        "url(https://virtualbackgrounds.site/wp-content/uploads/2020/08/the-matrix-digital-rain.jpg)",
+                    backgroundImage: "url(https://virtualbackgrounds.site/wp-content/uploads/2020/08/the-matrix-digital-rain.jpg)",
                     backgroundRepeat: "no-repeat",
                     backgroundSize: "cover",
                     backgroundBlendMode: "multiply",
@@ -105,6 +78,10 @@ export default function PaginaInicial() {
                     {/* Formulário */}
                     <Box
                         as="form"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            roteamento.push('/chat')
+                        }}
                         styleSheet={{
                             display: "flex",
                             flexDirection: "column",
@@ -127,6 +104,8 @@ export default function PaginaInicial() {
                         </Text>
 
                         <TextField
+                            value={username}
+                            onChange={e => setUsername(e.target.value)}
                             fullWidth
                             textFieldColors={{
                                 neutral: {
@@ -142,6 +121,7 @@ export default function PaginaInicial() {
                             }}
                         />
                         <Button
+                            disabled={username.length > 2 ? "" : "disabled"}
                             type="submit"
                             label="Entrar"
                             fullWidth
