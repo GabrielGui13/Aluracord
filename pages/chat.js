@@ -1,19 +1,63 @@
 import { Box, Text, TextField, Image, Button } from "@skynexui/components";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import appConfig from "../config.json";
+import { createClient } from "@supabase/supabase-js";
+import { useRouter } from 'next/router';
+import { ButtonSendSticker } from '../src/components/ButtonSendSticker'
+
+const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzU3NjkwNSwiZXhwIjoxOTU5MTUyOTA1fQ.Er4ZXFYKzVKy3rlMbVhuDvMKDriNQTuijtuUIzrXdNA";
+const SUPABASE_URL = "https://yedogtrxvbwzbejyyhjd.supabase.co";
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export default function ChatPage() {
+    const roteamento = useRouter();
+    const usuarioLogado = roteamento.query.username;
     const [mensagem, setMensagem] = useState("");
-    const [listaDeMensagens, setListaDeMensagens] = useState([]);
+    const [listaDeMensagens, setListaDeMensagens] = useState([
+/*         {
+            id: 1,
+            de: 'gabrielgui13',
+            texto: ":sticker: https://www.alura.com.br/imersao-react-4/assets/figurinhas/Figurinha_1.png",
+        },
+        {
+            id: 2,
+            de: 'gabrielgui13',
+            texto: 'Oi!'
+        } */
+    ]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        //roda sempre que a página carrega
+        const dadosDoSupabase = supabaseClient
+            .from("mensagens")
+            .select("*")
+            .order("id", { ascending: false }) //organização normal
+            .then(({ data }) => {
+                //console.log("Dados da consulta", data);
+                setListaDeMensagens(data);
+                setLoading(false);
+            }); //se ficar dentro do componente fica chamando toda vez que mudar o estado
+    }, []); //chamadas de api e coisas do tipo estão no useEffect
+
+    //o useEffect tras da database, então atualiza no loading da página
+    //quando nós mesmos adicionamos, o handleNovaMensagem insere a mensagem no banco de dados e retorna o dado, assim colocamos no array de mensagens, e atualiza já na tela
 
     const handleNovaMensagem = (novaMensagem) => {
         const mensagem = {
-            id: listaDeMensagens.length + 1,
-            de: "gabrielgui13",
+            //id: listaDeMensagens.length + 1,
+            de: usuarioLogado,
             texto: novaMensagem,
         };
 
-        setListaDeMensagens([mensagem, ...listaDeMensagens]);
+        supabaseClient
+            .from("mensagens")
+            .insert([mensagem])
+            .then(({ data }) => {
+                setListaDeMensagens([data[0], ...listaDeMensagens]);
+            });
+
         setMensagem("");
     };
 
@@ -23,7 +67,7 @@ export default function ChatPage() {
                 return m !== mensagem;
             });
 
-            return novaListaDeMensagens
+            return novaListaDeMensagens;
         });
     };
 
@@ -76,12 +120,26 @@ export default function ChatPage() {
                         )
                     })} */}
 
-                    {
+                    {loading ? (
+                        <Box
+                            tag="ul"
+                            styleSheet={{
+                                overflow: "scroll",
+                                display: "flex",
+                                flexDirection: "column-reverse",
+                                flex: 1,
+                                color: appConfig.theme.colors.neutrals["000"],
+                                marginBottom: "16px",
+                            }}
+                        >
+                            <h3>Carregando...</h3>
+                        </Box>
+                    ) : (
                         <MessageList
                             mensagens={listaDeMensagens}
                             apagarMensagem={handleApagarMensagem}
                         />
-                    }
+                    )}
 
                     <Box
                         as="form"
@@ -111,6 +169,11 @@ export default function ChatPage() {
                                     appConfig.theme.colors.neutrals[800],
                                 marginRight: "12px",
                                 color: appConfig.theme.colors.neutrals[200],
+                            }}
+                        />
+                        <ButtonSendSticker
+                            onStickerClick={() => {
+                                
                             }}
                         />
                     </Box>
@@ -145,7 +208,7 @@ function Header() {
 }
 
 function MessageList(props) {
-    console.log("MessageList", props);
+    //console.log("MessageList", props);
 
     return (
         <Box
@@ -187,7 +250,7 @@ function MessageList(props) {
                                     display: "inline-block",
                                     marginRight: "8px",
                                 }}
-                                src={`https://github.com/gabrielgui13.png`}
+                                src={`https://github.com/${mensagem.de}.png`}
                             />
                             <Text tag="strong">{mensagem.de}</Text>
                             <Text
@@ -207,7 +270,14 @@ function MessageList(props) {
                                 onClick={() => props.apagarMensagem(mensagem)}
                             />
                         </Box>
-                        {mensagem.texto}
+                        {mensagem.texto.startsWith(':sticker:')
+                            ? (
+                                <Image width="100px" src={mensagem.texto.replace(':sticker:', '')} />
+                            ) : (
+                                mensagem.texto
+                            )
+                        }
+                        {/* mensagem.texto */}
                     </Text>
                 );
             })}

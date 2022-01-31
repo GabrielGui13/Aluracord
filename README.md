@@ -1,0 +1,1 @@
+Supabase.io databasee password = aluracord123
